@@ -4,40 +4,87 @@
 void UBullCowCartridge::BeginPlay() // When the game starts
 {
     Super::BeginPlay();
-    PrintLine(TEXT("Welcome to Bulls Cows Salty Spatoon."));
-    PrintLine(TEXT("Guess the 6 letter word..."));  //Make this adaptable.
 
     SetupGame();
+
+
 }
 
 void UBullCowCartridge::OnInput(const FString& Input) // When the player hits enter
 {
     ClearScreen();
 
-
-    if(Input == HiddenWord)
+    if(bGameOver)
     {
-        PrintLine(TEXT("You have won!"));
+        //ClearScreen();
+        SetupGame();
     }
     else
     {
-
-        if(Input.Len() != HiddenWord.Len())
-        {
-            PrintLine(TEXT("HiddenWord is 6 characters long"));
-        }
-        //Isogram?
-        //Correct amount of letters?
-        //Decrease life
-
-        //Chec
-        PrintLine(TEXT("You have lost!"));
+        ProcessGuess(Input);
     }
+
     
 }
 
 void UBullCowCartridge::SetupGame()
 {
     HiddenWord = TEXT("Peanut");
-    Lives = 4;
+    Lives = HiddenWord.Len();
+    bGameOver = false;
+    
+    PrintLine(TEXT("Welcome to Bulls Cows Salty Spatoon."));
+
+    PrintLine(TEXT("Guess the %i letter word!"),HiddenWord.Len());
+    
+}
+
+void UBullCowCartridge::EndGame()
+{
+    bGameOver = true;
+    PrintLine(TEXT("The hidden word was: %s"), *HiddenWord);
+    PrintLine(TEXT("Press Enter to restart"));
+}
+
+void UBullCowCartridge::ProcessGuess(const FString& Guess)
+{
+
+    if(Guess == HiddenWord)
+    {
+        PrintLine(TEXT("You have won!"));
+        EndGame();
+        return;
+    }
+
+    if(--Lives == 0)
+    {
+        PrintLine(TEXT("You have lost!"));
+        EndGame();
+        return;
+    }
+
+    PrintLine(TEXT("You have %i lives remaining"),Lives);
+
+    if(Guess.Len() != HiddenWord.Len())
+    {
+        PrintLine(TEXT("HiddenWord is %i characters long"),HiddenWord.Len());
+    }
+
+    if(!IsIsogram(Guess))
+    {
+        PrintLine(TEXT("No repeating letters"));
+    }
+}
+
+bool UBullCowCartridge::IsIsogram(const FString& string) const
+{
+    for(int i = 0;i < string.Len()-1;i++)
+    {
+        for(int j = i+1; j < string.Len();j++)
+        {
+            if(string[i] == string[j])
+                return false;
+        }
+    }
+    return true;
 }
