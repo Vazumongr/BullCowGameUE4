@@ -1,13 +1,23 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "BullCowCartridge.h"
+#include "FileHelper.h"
+#include "Paths.h"
 
 void UBullCowCartridge::BeginPlay() // When the game starts
 {
     Super::BeginPlay();
 
+    
+    TArray<FString> HiddenWords;
+    const FString WordListPath = FPaths::ProjectContentDir() / TEXT("HiddenWordList.txt");
+    FFileHelper::LoadFileToStringArray(HiddenWords, *WordListPath);
+    Isograms = GetValidWords(HiddenWords);
+
     SetupGame();
 
+    PrintLine(HiddenWord);
 
+    
 }
 
 void UBullCowCartridge::OnInput(const FString& Input) // When the player hits enter
@@ -16,7 +26,7 @@ void UBullCowCartridge::OnInput(const FString& Input) // When the player hits en
 
     if(bGameOver)
     {
-        //ClearScreen();
+        //ClearScreen(); 
         SetupGame();
     }
     else
@@ -29,7 +39,7 @@ void UBullCowCartridge::OnInput(const FString& Input) // When the player hits en
 
 void UBullCowCartridge::SetupGame()
 {
-    HiddenWord = TEXT("Peanut");
+    HiddenWord = Isograms[FMath::RandRange(0, Isograms.Num() - 1)];
     Lives = HiddenWord.Len();
     bGameOver = false;
     
@@ -68,23 +78,67 @@ void UBullCowCartridge::ProcessGuess(const FString& Guess)
     if(Guess.Len() != HiddenWord.Len())
     {
         PrintLine(TEXT("HiddenWord is %i characters long"),HiddenWord.Len());
+        return;
     }
 
     if(!IsIsogram(Guess))
     {
         PrintLine(TEXT("No repeating letters"));
+        return;
     }
+
+
+    int32 Bulls, Cows;
+    GetBullCows(Guess, Bulls, Cows);
+
+    PrintLine(TEXT("You have %i bulls and %i cows"), Bulls, Cows);
 }
 
-bool UBullCowCartridge::IsIsogram(const FString& string) const
+bool UBullCowCartridge::IsIsogram(const FString& Word) const
 {
-    for(int i = 0;i < string.Len()-1;i++)
+    for(int32 i = 0;i < Word.Len()-1;i++)
     {
-        for(int j = i+1; j < string.Len();j++)
+        for(int32 j = i+1; j < Word.Len();j++)
         {
-            if(string[i] == string[j])
+            if(Word[i] == Word[j])
                 return false;
         }
     }
     return true;
+}
+
+TArray<FString> UBullCowCartridge::GetValidWords(const TArray<FString>& WordList) const
+{
+    TArray<FString> ValidWords;
+    for(FString Word : WordList)
+    {
+        if(Word.Len() >= 4 && Word.Len() <= 8 && IsIsogram(Word))
+        {
+            ValidWords.Emplace(Word);
+        }
+    }
+    return ValidWords;
+}
+
+void UBullCowCartridge::GetBullCows(const FString& Guess, int32& BullCount, int32& CowCount) const
+{
+    BullCount,CowCount = 0;
+    //For every character in the same place, increase bull
+    //For every character the same regardless of place, increase cow
+
+    for(int32 i = 0; i < Guess.Len(); i++)
+    {
+        if(Guess[i] == HiddenWord[i])
+        {
+            BullCount++;
+            continue;
+        }
+
+        int32 SearchIndex;
+        if(HiddenWord.FindChar(Guess[i],SearchIndex))
+        {
+            CowCount++;
+            continue;
+        }
+    }
 }
