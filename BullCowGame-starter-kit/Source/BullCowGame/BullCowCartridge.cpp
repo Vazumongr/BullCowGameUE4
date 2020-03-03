@@ -15,7 +15,7 @@ void UBullCowCartridge::BeginPlay() // When the game starts
 
     SetupGame();
 
-    PrintLine(HiddenWord);
+    
 
     
 }
@@ -46,6 +46,7 @@ void UBullCowCartridge::SetupGame()
     PrintLine(TEXT("Welcome to Bulls Cows Salty Spatoon."));
 
     PrintLine(TEXT("Guess the %i letter word!"),HiddenWord.Len());
+    PrintLine(HiddenWord);
     
 }
 
@@ -88,10 +89,11 @@ void UBullCowCartridge::ProcessGuess(const FString& Guess)
     }
 
 
-    int32 Bulls, Cows;
-    GetBullCows(Guess, Bulls, Cows);
+    //int32 Bulls, Cows;
+    FBullCowCount Count;
+    GetBullCows(Guess, Count);
 
-    PrintLine(TEXT("You have %i bulls and %i cows"), Bulls, Cows);
+    PrintLine(TEXT("You have %i bulls and %i cows"), Count.Bulls, Count.Cows);
 }
 
 bool UBullCowCartridge::IsIsogram(const FString& Word) const
@@ -123,8 +125,6 @@ TArray<FString> UBullCowCartridge::GetValidWords(const TArray<FString>& WordList
 void UBullCowCartridge::GetBullCows(const FString& Guess, int32& BullCount, int32& CowCount) const
 {
     BullCount,CowCount = 0;
-    //For every character in the same place, increase bull
-    //For every character the same regardless of place, increase cow
 
     for(int32 i = 0; i < Guess.Len(); i++)
     {
@@ -138,6 +138,27 @@ void UBullCowCartridge::GetBullCows(const FString& Guess, int32& BullCount, int3
         if(HiddenWord.FindChar(Guess[i],SearchIndex))
         {
             CowCount++;
+            continue;
+        }
+    }
+}
+
+void UBullCowCartridge::GetBullCows(const FString& Guess, FBullCowCount& Count) const
+{
+    Count.Bulls,Count.Cows = 0;
+
+    for(int32 i = 0; i < Guess.Len(); i++)
+    {
+        if(Guess[i] == HiddenWord[i])
+        {
+            Count.Bulls++;
+            continue;
+        }
+
+        int32 SearchIndex;
+        if(HiddenWord.FindChar(Guess[i],SearchIndex))
+        {
+            Count.Cows++;
             continue;
         }
     }
